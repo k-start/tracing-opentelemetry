@@ -105,7 +105,12 @@ impl PreSampledTracer for Tracer {
 
     fn new_trace_id(&self) -> otel::TraceId {
         self.provider()
-            .map(|provider| provider.config().id_generator.new_trace_id())
+            .map(|provider| {
+                provider
+                    .config()
+                    .id_generator
+                    .new_trace_id(provider.config().backward_compatible)
+            })
             .unwrap_or(otel::TraceId::INVALID)
     }
 
@@ -127,9 +132,12 @@ fn current_trace_state(
         (sc.trace_id(), sc.trace_flags())
     } else {
         (
-            builder
-                .trace_id
-                .unwrap_or_else(|| provider.config().id_generator.new_trace_id()),
+            builder.trace_id.unwrap_or_else(|| {
+                provider
+                    .config()
+                    .id_generator
+                    .new_trace_id(provider.config().backward_compatible)
+            }),
             Default::default(),
         )
     }
